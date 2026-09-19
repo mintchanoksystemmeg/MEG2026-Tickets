@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MISTER ESAN GAY 2026</title>
+  <!-- ไลบรารีสำหรับสร้าง และ สแกน QR Code -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    :root { --bg: #07101e; --panel: #0d192b; --line: #304360; --gold: #e2c06b; --blue: #356cff; --green: #22c55e; --red: #e83243; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: linear-gradient(135deg, #050912, #0b1527); color: #f5f7fb; font-family: Arial, sans-serif; }
+    header { text-align: center; padding: 15px; border-bottom: 1px solid #3b4b67; position: relative; }
+    h1 { margin: 0; color: var(--gold); font-size: clamp(20px, 4vw, 32px); }
+    .nav-btn { position: absolute; right: 15px; top: 18px; padding: 6px 12px; background: #1f365d; border: 1px solid var(--line); color: white; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .wrap { max-width: 1180px; margin: auto; padding: 16px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; }
+    .box { background: #0d192bf5; border: 1px solid var(--line); border-radius: 15px; padding: 14px; }
+    .stage { height: 60px; border: 1px solid #62789f; border-radius: 10px; background: linear-gradient(#19325d, #101d34); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; margin-bottom: 15px; }
+    .legend { text-align: center; color: #aeb8c9; font-size: 12px; margin-bottom: 14px; }
+    .legend span { margin: 0 7px; }
+    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 4px; vertical-align: -2px; margin-right: 3px; }
+    .free { background: #f2f3f5; } .sel { background: var(--blue); } .hold { background: #f2c64b; } .sold { background: var(--red); }
+    .zones { display: grid; grid-template-columns: 1fr 20px 1fr; gap: 8px; margin-bottom: 6px; }
+    .block { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .aisle { background: #15233a; border: 1px solid #3a4c6c; border-radius: 7px; }
+    .seat { min-height: 38px; border-radius: 6px; border: 1px solid #aab4c5; background: #f2f3f5; color: #111827; font-weight: 700; font-size: 10px; cursor: pointer; padding: 2px; }
+    .seat.selected { background: var(--blue); color: white; }
+    .seat.hold { background: #f2c64b; color: #2a2105; cursor: not-allowed; }
+    .seat.sold { background: var(--red); color: #fff; cursor: not-allowed; }
+    .summary { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 12px 0; }
+    .row { display: flex; justify-content: space-between; margin: 6px 0; }
+    .total { font-size: 22px; color: var(--gold); font-weight: 900; }
+    input[type="text"], input[type="file"] { width: 100%; padding: 10px; margin: 4px 0 10px; border: 1px solid #3b4d6c; border-radius: 8px; background: #070e1a; color: white; }
+    label { font-size: 12px; color: #c9d2df; }
+    .btn { width: 100%; padding: 12px; border: 0; border-radius: 9px; background: var(--blue); color: white; font-weight: 800; cursor: pointer; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-pay { background: var(--green); margin-top: 10px; }
+    .result { display: none; margin-top: 12px; padding: 12px; border-radius: 10px; background: #0d2546; border: 1px solid #35609b; line-height: 1.6; font-size: 13px; text-align: center; }
+    .qr-pay { width: 100%; max-width: 180px; border-radius: 10px; display: block; margin: 8px auto; }
+    
+    #finalTicketImg { width: 100%; max-width: 320px; border-radius: 10px; border: 2px solid var(--gold); margin: 10px auto; display: block; }
+    
+    #adminView { display: none; }
+    .admin-controls { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+    .admin-controls .btn { flex: 1; min-width: 200px; }
+    .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+    .admin-table th, .admin-table td { border: 1px solid var(--line); padding: 8px; text-align: left; }
+    .admin-table th { background: #15233a; color: var(--gold); }
+    .badge { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+    .badge-pending { background: #f2c64b; color: black; }
+    .badge-ok { background: var(--green); color: white; }
+    .btn-action { padding: 4px 8px; border: 0; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 2px; }
+    .btn-delete { background: var(--red); color: white; }
+    .slip-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+
+    #scanner-box { width: 100%; max-width: 320px; margin: 10px auto; display: none; border: 2px solid var(--gold); border-radius: 10px; overflow: hidden; }
+    @media(max-width:800px) { .layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MISTER ESAN GAY 2026</h1>
+    <button class="nav-btn" id="btnAdminNav">สำหรับแอดมิน</button>
+  </header>
+
+  <div class="wrap">
+    <div id="userView" class="layout">
+      <section class="box">
+        <div class="stage">เวที</div>
+        <div class="legend">
+          <span><i class="dot free"></i>ว่าง</span>
+          <span><i class="dot sel"></i>เลือกแล้ว</span>
+          <span><i class="dot hold"></i>รออนุมัติสลิป</span>
+          <span><i class="dot sold"></i>จองแล้ว</span>
+        </div>
+        <div id="map"></div>
+      </section>
+
+      <aside class="box">
+        <h2>เลือกที่นั่ง</h2>
+        <div class="summary">
+          <div class="row"><span>จำนวน</span><b id="count">0</b></div>
+          <div class="row"><span>ที่นั่ง</span><b id="chosen">—</b></div>
+          <div class="row"><span>ยอดรวม</span><b class="total" id="total">฿0</b></div>
+        </div>
+        <label>ชื่อ - นามสกุล *</label>
+        <input type="text" id="name" placeholder="กรอกชื่อ - นามสกุล">
+        <label>เบอร์โทรศัพท์ *</label>
+        <input type="text" id="phone" placeholder="กรอกเบอร์โทรศัพท์" inputmode="tel">
+        <button class="btn" id="book" disabled>ยืนยันการจอง</button>
+        <div id="result" class="result"></div>
+      </aside>
+    </div>
+
+    <div id="adminView" class="box">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>สแกนตรวจบัตร & ระบบหลังบ้าน</h2>
+        <button class="nav-btn" style="position:static;" id="btnUserNav">กลับหน้าจอง</button>
+      </div>
+
+      <div class="admin-controls">
+        <button class="btn" style="background:var(--gold); color:black;" id="btnToggleScanner">📷 เปิด/ปิด กล้องสแกน QR Code เช็คอิน</button>
+        <button class="btn" style="background:var(--red); color:white;" id="btnResetData">🗑️ ล้างข้อมูลการจองทั้งหมด (Reset System)</button>
+      </div>
+
+      <div id="scanner-box"><div id="reader"></div></div>
+
+      <input type="text" id="searchBox" placeholder="🔍 ค้นหา Order ID, ชื่อ หรือ เบอร์โทร...">
+      
+      <div style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>ชื่อ-เบอร์โทร</th>
+              <th>ที่นั่ง</th>
+              <th>สลิป</th>
+              <th>สถานะชำระ</th>
+              <th>การเข้างาน</th>
+              <th>จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:none;">
+    <div id="tempQr"></div>
+    <canvas id="ticketCanvas"></canvas>
+  </div>
+
+  <!-- Firebase JavaScript SDK (Modular Version v12.19.0) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+    import { getDatabase, ref, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBoU3mvx-BJZSmYfFpiZ9t_wksTMJtBxn0",
+      authDomain: "meg2026ticketsbase.firebaseapp.com",
+      databaseURL: "https://meg2026ticketsbase-default-rtdb.firebaseio.com",
+      projectId: "meg2026ticketsbase",
+      storageBucket: "meg2026ticketsbase.firebasestorage.app",
+      messagingSenderId: "344417433344",
+      appId: "1:344417433344:web:de925cf6d7a6aea8fe65e5"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const ticketsRef = ref(database, 'tickets');
+
+    const PRICE = 250, HOLD = 10 * 60 * 1000;
+    let selected = new Set();
+    let db = {};
+    let html5QrcodeScanner = null;
+
+    // ติดตามข้อมูลแบบ Realtime จาก Firebase Database
+    onValue(ticketsRef, (snapshot) => {
+      db = snapshot.val() || {};
+      
+      // ยกเลิกรายการที่เลือกหากที่นั่งถูกผู้อื่นจองไปแล้ว
+      selected = new Set([...selected].filter(s => !db[s]));
+      
+      render();
+      if (document.getElementById('adminView').style.display === 'block') {
+        loadAdminData();
+      }
+    });
+
+    function renderSeatBtn(seatId) {
+      let x = db[seatId], c = '', dis = '';
+      if (x?.status === 'SOLD') { c = 'sold'; dis = 'disabled'; }
+      else if (x?.status === 'HOLD') { c = 'hold'; dis = 'disabled'; }
+      else if (selected.has(seatId)) c = 'selected';
+      return `<button class="seat ${c}" ${dis} data-seat="${seatId}">${seatId}</button>`;
+    }
+
+    function render() {
+      let html = '';
+      for (let row = 1; row <= 11; row++) {
+        const leftSeats = [`A${row+44}`, `A${row+33}`, `A${row+22}`, `A${row+11}`, `A${row}`];
+        const rightSeats = [`B${row}`, `B${row+11}`, `B${row+22}`, `B${row+33}`, `B${row+44}`];
+        html += `<div class="zones">
+          <div class="block">${leftSeats.map(s => renderSeatBtn(s)).join('')}</div>
+          <div class="aisle"></div>
+          <div class="block">${rightSeats.map(s => renderSeatBtn(s)).join('')}</div>
+        </div>`;
+      }
+      document.getElementById('map').innerHTML = html;
+
+      // Event click เก้าอี้
+      document.querySelectorAll('#map .seat:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => toggle(btn.dataset.seat));
+      });
+
+      updateSummary();
+    }
+
+    function toggle(s) { 
+      selected.has(s) ? selected.delete(s) : selected.add(s); 
+      render(); 
+    }
+
+    function updateSummary() {
+      let a = [...selected].sort();
+      document.getElementById('count').textContent = a.length;
+      document.getElementById('chosen').textContent = a.length ? a.join(', ') : '—';
+      document.getElementById('total').textContent = '฿' + (a.length * PRICE).toLocaleString();
+      document.getElementById('book').disabled = !a.length;
+    }
+
+    // ยืนยันการจอง และบันทึกลง Firebase
+    document.getElementById('book').addEventListener('click', () => {
+      let name = document.getElementById('name').value.trim();
+      let phone = document.getElementById('phone').value.trim();
+      if (!name || !phone) { alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
+
+      let a = [...selected].sort();
+      let order = 'MEG26-' + Math.random().toString(36).slice(2,8).toUpperCase();
+
+      const updates = {};
+      a.forEach(s => {
+        updates[`tickets/${s}`] = {
+          status: 'HOLD',
+          until: Date.now() + HOLD,
+          order: order,
+          name: name,
+          phone: phone,
+          slip: '',
+          checked: false
+        };
+      });
+
+      update(ref(database), updates);
+
+      const resBox = document.getElementById('result');
+      resBox.style.display = 'block';
+      resBox.innerHTML = `
+        <b>จองสำเร็จ! กรุณาสแกนจ่ายเงินและแนบสลิป</b><br>
+        Order ID: <b style="color:var(--gold); font-size:16px;">${order}</b><br>
+        ที่นั่ง: <b>${a.join(', ')}</b> | ยอดชำระ: <b>฿${(a.length*PRICE).toLocaleString()}</b><br>
+        <img src="qr.jpg" class="qr-pay" id="qrPayImg" alt="QR Code จ่ายเงิน" onerror="this.onerror=null; this.src='qr.jpeg';"><br>
+        <div style="text-align:left; margin:10px 0;">
+          <label>แนบรูปสลิปชำระเงิน *</label>
+          <input type="file" id="slipInput" accept="image/*">
+        </div>
+        <button class="btn btn-pay" id="btnSubmitSlip">ยืนยันส่งสลิปชำระเงิน</button>
+        <div id="ticketContainer" style="display:none; margin-top:15px;">
+          <hr style="border:0;border-top:1px solid #35609b;margin:15px 0;">
+          <b>🎫 บัตรเข้างานของคุณ</b><br>
+          <small style="color:#aeb8c9">กดค้างที่รูปภาพด้านล่างเพื่อบันทึกบัตรลงเครื่อง</small><br>
+          <img id="finalTicketImg" alt="กำลังสร้างรูปบัตรเข้างาน...">
+        </div>
+      `;
+
+      document.getElementById('btnSubmitSlip').addEventListener('click', () => submitSlip(order, name, a.join(', ')));
+
+      selected.clear();
+      render();
+    });
+
+    function submitSlip(orderId, name, seats) {
+      const slipFile = document.getElementById('slipInput').files[0];
+      if (!slipFile) { alert('กรุณาแนบไฟล์รูปภาพสลิปชำระเงินก่อนครับ'); return; }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const slipBase64 = e.target.result;
+        const updates = {};
+        for (let s in db) {
+          if (db[s].order === orderId) {
+            updates[`tickets/${s}/slip`] = slipBase64;
+          }
+        }
+        update(ref(database), updates);
+        alert('ส่งสลิปชำระเงินเรียบร้อยแล้ว! ระบบกำลังสร้างบัตรเข้างานให้ครับ');
+
+        document.getElementById('ticketContainer').style.display = 'block';
+        generateTicketImage(orderId, name, seats);
+      };
+      reader.readAsDataURL(slipFile);
+    }
+
+    function generateTicketImage(orderId, name, seats) {
+      const tempQr = document.getElementById("tempQr");
+      tempQr.innerHTML = "";
+      new QRCode(tempQr, { text: orderId, width: 300, height: 300 });
+
+      setTimeout(() => {
+        const qrCanvas = tempQr.querySelector('canvas');
+        const canvas = document.getElementById('ticketCanvas');
+        const ctx = canvas.getContext('2d');
+        const bgImg = new Image();
+        
+        bgImg.src = 'ticket-template.png';
+        bgImg.onerror = function() {
+          bgImg.onerror = null;
+          bgImg.src = 'ticket-template.jpeg';
+        };
+
+        bgImg.onload = function() {
+          canvas.width = bgImg.width;
+          canvas.height = bgImg.height;
+
+          const w = canvas.width;
+          const h = canvas.height;
+
+          ctx.drawImage(bgImg, 0, 0, w, h);
+
+          const qrX = w * 0.345;
+          const qrY = h * 0.160;
+          const qrWidth = w * 0.310;
+          const qrHeight = h * 0.175;
+          
+          if (qrCanvas) {
+            ctx.drawImage(qrCanvas, qrX, qrY, qrWidth, qrHeight);
+          }
+
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "#0d192b";
+
+          const nameX = w * 0.535;
+          const nameY = h * 0.715;
+          ctx.font = "bold " + Math.round(w * 0.040) + "px Arial";
+          
+          let displayName = name;
+          if (displayName.length > 15) {
+            displayName = displayName.substring(0, 13) + "..";
+          }
+          ctx.fillText(displayName, nameX, nameY);
+
+          const seatX = w * 0.785;
+          const seatY = h * 0.780;
+          
+          let seatFontSize = Math.round(w * 0.055);
+          if (seats.length > 8) {
+            seatFontSize = Math.round(w * 0.038);
+          }
+          ctx.font = "bold " + seatFontSize + "px Arial";
+          ctx.fillStyle = "#1e3a8a";
+          ctx.fillText(seats, seatX, seatY);
+
+          document.getElementById('finalTicketImg').src = canvas.toDataURL("image/png");
+        };
+      }, 300);
+    }
+
+    // เมนูสลับหน้า Admin
+    document.getElementById('btnAdminNav').addEventListener('click', toggleAdmin);
+    document.getElementById('btnUserNav').addEventListener('click', toggleAdmin);
+
+    function toggleAdmin() {
+      let u = document.getElementById('userView'), a = document.getElementById('adminView');
+      if (a.style.display === 'block') {
+        a.style.display = 'none'; u.style.display = 'grid';
+        if (html5QrcodeScanner) html5QrcodeScanner.clear();
+      } else {
+        let pwd = prompt('กรุณากรอกรหัสผ่านแอดมิน:');
+        if (pwd === '1234') {
+          u.style.display = 'none'; a.style.display = 'block';
+          loadAdminData();
+        } else alert('รหัสผ่านไม่ถูกต้อง');
+      }
+    }
+
+    document.getElementById('btnResetData').addEventListener('click', () => {
+      let confirmReset = confirm("⚠️ คุณแน่ใจหรือไม่ที่จะล้างข้อมูลการจองทั้งหมด?\nที่นั่งทั้งหมดจะกลับมาเป็นสถานะว่างทันที");
+      if (confirmReset) {
+        remove(ticketsRef).then(() => {
+          alert("✅ ล้างข้อมูลระบบเรียบร้อยแล้ว ที่นั่งทั้งหมดพร้อมจำหน่ายใหม่ครับ");
+        });
+      }
+    });
+
+    document.getElementById('btnToggleScanner').addEventListener('click', () => {
+      let box = document.getElementById('scanner-box');
+      if (box.style.display === 'block') {
+        box.style.display = 'none';
+        if (html5QrcodeScanner) html5QrcodeScanner.clear();
+      } else {
+        box.style.display = 'block';
+        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+      }
+    });
+
+    function onScanSuccess(decodedText) {
+      let orderId = decodedText.trim();
+      let found = false;
+
+      for (let seatId in db) {
+        if (db[seatId].order === orderId) {
+          found = true;
+          if (db[seatId].status !== 'SOLD') {
+            alert(`⚠️ รายการนี้ยังไม่ได้ผ่านการอนุมัติสลิปชำระเงิน!\nOrder: ${orderId}`);
+          } else if (db[seatId].checked) {
+            alert(`⚠️ บัตรใบนี้ถูกใช้งานแล้ว!\nOrder: ${orderId}\nคุณ: ${db[seatId].name}`);
+          } else {
+            set(ref(database, `tickets/${seatId}/checked`), true);
+            alert(`✅ เช็คอินสำเร็จ!\nOrder: ${orderId}\nคุณ: ${db[seatId].name}`);
+          }
+          break;
+        }
+      }
+
+      if (!found) alert(`❌ ไม่พบ Order ID: ${orderId} ในระบบ`);
+    }
+
+    function loadAdminData() {
+      let tbody = document.getElementById('adminTableBody');
+      tbody.innerHTML = '';
+      let orders = {};
+
+      for (let seatId in db) {
+        let item = db[seatId];
+        if (!orders[item.order]) {
+          orders[item.order] = { order: item.order, name: item.name, phone: item.phone, seats: [seatId], status: item.status, slip: item.slip, checked: item.checked };
+        } else {
+          orders[item.order].seats.push(seatId);
+        }
+      }
+
+      for (let o in orders) {
+        let item = orders[o];
+        let slipHtml = item.slip ? `<img src="${item.slip}" class="slip-preview" data-slip="${item.slip}">` : '<small style="color:#aaa">ไม่มีสลิป</small>';
+        
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><b>${item.order}</b></td>
+          <td>${item.name}<br><small>${item.phone}</small></td>
+          <td>${item.seats.join(', ')}</td>
+          <td>${slipHtml}</td>
+          <td><span class="badge ${item.status==='SOLD'?'badge-ok':'badge-pending'}">${item.status==='SOLD'?'อนุมัติแล้ว':'รอตรวจสลิป'}</span></td>
+          <td><span class="badge ${item.checked?'badge-ok':'badge-pending'}">${item.checked?'เข้างานแล้ว':'ยังไม่เข้างาน'}</span></td>
+          <td>
+            ${item.status !== 'SOLD' ? `<button class="btn-action btn-approve" style="background:var(--green);color:white" data-order="${item.order}">อนุมัติสลิป</button>` : ''}
+            ${!item.checked ? `<button class="btn-action btn-checkin" style="background:var(--blue);color:white" data-order="${item.order}">เช็คอิน</button>` : '—'}
+            <button class="btn-action btn-delete" data-order="${item.order}">🗑️ ลบ</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+
+      // Event handlers ในตาราง Admin
+      document.querySelectorAll('.slip-preview').forEach(img => {
+        img.addEventListener('click', () => {
+          let w = window.open("");
+          w.document.write(`<img src="${img.dataset.slip}" style="max-width:100%; height:auto;">`);
+        });
+      });
+
+      document.querySelectorAll('.btn-approve').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const updates = {};
+          for (let s in db) {
+            if (db[s].order === btn.dataset.order) {
+              updates[`tickets/${s}/status`] = 'SOLD';
+            }
+          }
+          update(ref(database), updates);
+          alert('อนุมัติการชำระเงินเรียบร้อยแล้ว!');
+        });
+      });
+
+      document.querySelectorAll('.btn-checkin').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const updates = {};
+          for (let s in db) {
+            if (db[s].order === btn.dataset.order) {
+              updates[`tickets/${s}/checked`] = true;
+            }
+          }
+          update(ref(database), updates);
+          alert('เช็คอินเรียบร้อย');
+        });
+      });
+
+      document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          let confirmDelete = confirm(`⚠️ คุณแน่ใจหรือไม่ที่จะลบออเดอร์ ${btn.dataset.order}?\nที่นั่งของออเดอร์นี้จะกลับมาเป็นสถานะ "ว่าง" ทันที`);
+          if (confirmDelete) {
+            for (let s in db) {
+              if (db[s].order === btn.dataset.order) {
+                remove(ref(database, `tickets/${s}`));
+              }
+            }
+            alert(`✅ ลบออเดอร์ ${btn.dataset.order} และคืนที่นั่งว่างเรียบร้อยแล้วครับ`);
+          }
+        });
+      });
+    }
+
+    document.getElementById('searchBox').addEventListener('keyup', () => {
+      let q = document.getElementById('searchBox').value.toLowerCase();
+      document.querySelectorAll('#adminTableBody tr').forEach(r => {
+        r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>
